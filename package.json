@@ -1,6 +1,6 @@
 {
   "name": "@cyberdaddy/harness-dressup",
-  "version": "0.8.2",
+  "version": "1.1.0",
   "description": "赛博老爸的 Harness 换装器 — 本地主题、启动动画与独立桌宠",
   "private": true,
   "type": "module",
@@ -34,7 +34,9 @@
     "test:cyberdad-native": "node tests/cyberdad-native.mjs",
     "test:geek-video": "node tests/geek-video.mjs",
     "test:geek-native": "node tests/geek-native.mjs",
-    "test:geek-hud": "node tests/geek-hud-native.mjs"
+    "test:geek-hud": "node tests/geek-hud-native.mjs",
+    "test:custom-video-manager": "node tests/custom-video-manager.mjs",
+    "test:custom-video-startup": "node tests/custom-video-startup.mjs"
   },
   "main": "./lib/index.js",
   "exports": {

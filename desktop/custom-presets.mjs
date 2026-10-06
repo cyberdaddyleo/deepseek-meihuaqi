@@ -1,10 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { inflateSync } from 'node:zlib';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, copyFileSync, lstatSync, unlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, copyFileSync, lstatSync, unlinkSync, openSync, closeSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { customAssetId } from '../src/catalog.mjs';
+import { IMAGE_MAX_BYTES, VIDEO_MAX_BYTES, VIDEO_MAX_SECONDS } from '../src/media-limits.mjs';
 const kinds = ['theme', 'splash', 'pet'];
-const maxBytes = 5 * 1024 * 1024;
+// Video records need schema 2: a still-running v0.8.x pet rejects this version
+// before trying to "repair" the new record as if it were a damaged image.
+const catalogVersion = 2;
+const maxBytes = IMAGE_MAX_BYTES;
 const mimeExt = { 'image/png':'png', 'image/jpeg':'jpg', 'image/webp':'webp', 'image/gif':'gif', 'image/svg+xml':'svg' };
 const paletteKeys = ['base','surface','sidebar','soft','selected','text','muted','accent','border','code'];
 const idPattern = /^custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -12,8 +16,10 @@ const empty = () => ({ theme:[], splash:[], pet:[] });
 const plain = value => value && typeof value === 'object' && !Array.isArray(value);
 export function atomicJSON(file, value) {
   const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`;
-  writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { mode:0o600 });
-  renameSync(temporary, file);
+  try {
+    writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { mode:0o600, flag:'wx' });
+    renameSync(temporary, file);
+  } finally { try { unlinkSync(temporary); } catch (error) { if(error.code!=='ENOENT')throw error; } }
 }
 function nameOf(value) {
   if (typeof value !== 'string' || !value.trim() || value.trim().length > 40 || /[\u0000-\u001f\u007f]/.test(value)) throw new Error('预设名称应为 1–40 个字符');
@@ -155,6 +161,104 @@ function decodeImage(image) {
   const data=Buffer.from(match[2],'base64');if(data.toString('base64')!==match[2])throw new Error('图片数据格式无效');validateImage(data,image.type);
   return {data,type:image.type,ext:mimeExt[image.type]};
 }
+/** Validate bounded, self-contained MP4 containers before handing bytes to Chromium.
+ * This is structural validation, not a codec decoder: the UI also checks playback.
+ * Ordinary non-fragmented MP4 exports are supported; fragmented streams are not.
+ */
+export function validateVideo(data) {
+  if(!Buffer.isBuffer(data)||!data.length||data.length>VIDEO_MAX_BYTES)throw new Error('每段视频最大 50 MiB');
+  const invalid=()=>{throw new Error('MP4 视频内容不完整或结构无效，请重新导出普通 MP4 文件');};
+  let boxCount=0;
+  const boxes=(start,end)=>{
+    const result=[];
+    while(start<end){
+      if(++boxCount>100_000||end-start<8)invalid();
+      let size=data.readUInt32BE(start),header=8;
+      const type=data.toString('ascii',start+4,start+8);
+      if(size===1){if(end-start<16)invalid();const large=data.readBigUInt64BE(start+8);if(large>BigInt(Number.MAX_SAFE_INTEGER))invalid();size=Number(large);header=16;}
+      else if(size===0)size=end-start;
+      if(size<header||size>end-start)invalid();
+      result.push({type,start: start+header,end:start+size});start+=size;
+    }
+    return result;
+  };
+  const one=(list,type)=>{const found=list.filter(box=>box.type===type);if(found.length!==1)invalid();return found[0];};
+  const children=box=>boxes(box.start,box.end);
+  const top=boxes(0,data.length),ftyp=one(top,'ftyp');
+  if(top[0]!==ftyp||ftyp.end-ftyp.start<8||(ftyp.end-ftyp.start)%4)invalid();
+  const brands=[data.toString('ascii',ftyp.start,ftyp.start+4)];
+  for(let p=ftyp.start+8;p<ftyp.end;p+=4)brands.push(data.toString('ascii',p,p+4));
+  if(!brands.some(brand=>/^(?:isom|iso[2-9]|mp4[12]|avc1)$/.test(brand)))throw new Error('请选择标准 MP4 视频，不支持 MOV 或流媒体文件');
+  const movie=children(one(top,'moov')),mdat=top.filter(box=>box.type==='mdat'&&box.end>box.start);
+  if(!mdat.length||top.some(box=>box.type==='moof')||movie.some(box=>box.type==='mvex'))invalid();
+  const mvhd=one(movie,'mvhd'),version=data[mvhd.start];
+  if(![0,1].includes(version)||mvhd.end-mvhd.start<(version?112:100))invalid();
+  const timescale=data.readUInt32BE(mvhd.start+(version?20:12));
+  const ticks=version?Number(data.readBigUInt64BE(mvhd.start+24)):data.readUInt32BE(mvhd.start+16);
+  const duration=ticks/timescale;
+  if(!timescale||!Number.isFinite(duration)||duration<=0||duration>VIDEO_MAX_SECONDS)throw new Error('视频时长必须大于 0 且不超过 120 秒');
+  let hasVideo=false;
+  for(const track of movie.filter(box=>box.type==='trak')){
+    const mdia=children(one(children(track),'mdia')),hdlr=one(mdia,'hdlr');
+    if(hdlr.end-hdlr.start<12)invalid();
+    const handler=data.toString('ascii',hdlr.start+8,hdlr.start+12);
+    if(!['vide','soun'].includes(handler))continue;
+    const minf=children(one(mdia,'minf')),stbl=children(one(minf,'stbl'));
+    const dref=one(children(one(minf,'dinf')),'dref');
+    if(dref.end-dref.start<8)invalid();
+    const references=boxes(dref.start+8,dref.end);
+    if(references.length!==data.readUInt32BE(dref.start+4)||!references.length)invalid();
+    // Reject remote data references; all samples must be in this file's mdat boxes.
+    for(const ref of references)if(ref.type!=='url '||ref.end-ref.start!==4||data.readUInt32BE(ref.start)!==1)invalid();
+    const stsd=one(stbl,'stsd');if(stsd.end-stsd.start<8)invalid();
+    const formats=boxes(stsd.start+8,stsd.end);
+    if(!formats.length||formats.length!==data.readUInt32BE(stsd.start+4))invalid();
+    for(const format of formats){if(format.end-format.start<8||data.readUInt16BE(format.start+6)<1||data.readUInt16BE(format.start+6)>references.length)invalid();}
+    if(handler==='vide'){
+      for(const format of formats){
+        if(!['avc1','avc3'].includes(format.type))throw new Error('视频编码需为 H.264，请将视频导出为 H.264 MP4 后再添加');
+        if(format.end-format.start<78)invalid();
+        dimensions(data.readUInt16BE(format.start+24),data.readUInt16BE(format.start+26));
+        const avcc=one(boxes(format.start+78,format.end),'avcC');
+        if(avcc.end-avcc.start<7||data[avcc.start]!==1)invalid();
+      }
+      hasVideo=true;
+    }
+    const stsz=one(stbl,'stsz');if(stsz.end-stsz.start<12)invalid();
+    const commonSize=data.readUInt32BE(stsz.start+4),sampleCount=data.readUInt32BE(stsz.start+8);
+    if(!sampleCount||sampleCount>1_000_000||stsz.end-stsz.start!==12+(commonSize?0:sampleCount*4))invalid();
+    const offsets=stbl.filter(box=>['stco','co64'].includes(box.type));if(offsets.length!==1)invalid();
+    const chunks=offsets[0],width=chunks.type==='stco'?4:8;if(chunks.end-chunks.start<8)invalid();
+    const chunkCount=data.readUInt32BE(chunks.start+4);if(!chunkCount||chunkCount>sampleCount||chunks.end-chunks.start!==8+chunkCount*width)invalid();
+    const stsc=one(stbl,'stsc');if(stsc.end-stsc.start<8)invalid();
+    const mappingCount=data.readUInt32BE(stsc.start+4);if(!mappingCount||mappingCount>chunkCount||stsc.end-stsc.start!==8+mappingCount*12)invalid();
+    const mapping=[];
+    for(let i=0;i<mappingCount;i++){
+      const at=stsc.start+8+i*12,first=data.readUInt32BE(at),count=data.readUInt32BE(at+4),description=data.readUInt32BE(at+8);
+      if(first<1||first>chunkCount||(i===0?first!==1:first<=mapping[i-1].first)||!count||!description||description>formats.length)invalid();
+      mapping.push({first,count});
+    }
+    let sample=0,mapIndex=0;
+    for(let i=0;i<chunkCount;i++){
+      if(mapping[mapIndex+1]?.first===i+1)mapIndex++;
+      const count=mapping[mapIndex].count;if(sample+count>sampleCount)invalid();
+      let size=0;for(let j=0;j<count;j++,sample++)size+=commonSize||data.readUInt32BE(stsz.start+12+sample*4);
+      const at=chunks.start+8+i*width,offset=width===4?data.readUInt32BE(at):Number(data.readBigUInt64BE(at));
+      if(!Number.isSafeInteger(offset)||!size||!mdat.some(box=>offset>=box.start&&offset+size<=box.end))invalid();
+    }
+    if(sample!==sampleCount)invalid();
+  }
+  if(!hasVideo)throw new Error('MP4 中没有可播放的视频画面');
+  return {duration};
+}
+function decodeVideo(video) {
+  if(!plain(video)||video.type!=='video/mp4'||typeof video.dataUrl!=='string')throw new Error('请选择 MP4 启动视频');
+  if(video.dataUrl.length>Math.ceil(VIDEO_MAX_BYTES/3)*4+100)throw new Error('每段视频最大 50 MiB');
+  const match=/^data:video\/mp4;base64,([A-Za-z0-9+/]*={0,2})$/.exec(video.dataUrl);
+  if(!match||match[1].length%4!==0)throw new Error('MP4 视频数据格式无效');
+  const data=Buffer.from(match[1],'base64');if(data.toString('base64')!==match[1])throw new Error('MP4 视频数据格式无效');
+  return {data,type:'video/mp4',ext:'mp4',...validateVideo(data)};
+}
 function themePreview(p) {
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280"><rect width="480" height="280" fill="${p.base}"/><rect x="16" y="16" width="116" height="248" rx="12" fill="${p.sidebar}"/><rect x="28" y="58" width="92" height="32" rx="8" fill="${p.selected}"/><rect x="150" y="16" width="314" height="248" rx="12" fill="${p.surface}"/><rect x="170" y="40" width="120" height="12" rx="6" fill="${p.text}"/><rect x="170" y="70" width="234" height="8" rx="4" fill="${p.muted}"/><rect x="170" y="106" width="274" height="80" rx="8" fill="${p.code}"/><rect x="182" y="122" width="100" height="8" rx="4" fill="${p.accent}"/><rect x="170" y="218" width="274" height="28" rx="8" fill="${p.soft}" stroke="${p.border}"/></svg>`);
 }
@@ -162,56 +266,77 @@ function themePreview(p) {
 export class CustomPresets {
   constructor(dir,warn) {this.dir=dir;this.file=join(dir,'custom-presets.json');this.assetDir=join(dir,'custom-assets');this.warn=warn;this.checked=new Map();}
   backup() {copyFileSync(this.file,join(this.dir,`custom-presets.broken-${Date.now()}-${randomUUID()}.json`));}
-  write(catalog) {atomicJSON(this.file,{version:1,...catalog});}
+  write(catalog) {atomicJSON(this.file,{...catalog,version:catalogVersion});}
   asset(path) {
     const id=customAssetId(path);if(!id)throw new Error('无效的自定义素材路径');
     if(!lstatSync(this.assetDir).isDirectory()||lstatSync(this.assetDir).isSymbolicLink())throw new Error('自定义素材目录无效');
     const file=join(this.dir,path),stat=lstatSync(file);
-    if(!stat.isFile()||stat.isSymbolicLink()||stat.size>maxBytes)throw new Error('自定义素材缺失或损坏');
-    const ext=extname(file).slice(1),type=Object.keys(mimeExt).find(m=>mimeExt[m]===ext),key=`${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`;
-    if(this.checked.get(file)!==key){validateImage(readFileSync(file),type);this.checked.set(file,key);}
-    return {file,type};
+    const ext=extname(file).slice(1),video=ext==='mp4',type=video?'video/mp4':Object.keys(mimeExt).find(m=>mimeExt[m]===ext);
+    if(!stat.isFile()||stat.isSymbolicLink()||stat.size>(video?VIDEO_MAX_BYTES:maxBytes))throw new Error('自定义素材缺失或损坏');
+    const key=`${stat.size}:${stat.mtimeMs}:${stat.ctimeMs}`;let verified=this.checked.get(file);
+    if(verified?.key!==key){const data=readFileSync(file);verified={key,...(video?validateVideo(data):(validateImage(data,type),{}))};this.checked.set(file,verified);}
+    return {file,type,duration:verified.duration};
   }
   load() {
     if(!existsSync(this.file)){const value=empty();this.write(value);return value;}
     let raw;
     try{raw=JSON.parse(readFileSync(this.file,'utf8'));}catch(error){if(error.code)throw error;this.backup();this.warn('自定义预设配置损坏，已保留备份并恢复空白素材库。');const value=empty();this.write(value);return value;}
-    if(Number.isInteger(raw?.version)&&raw.version>1)throw new Error('自定义预设配置版本较新，请升级换装器；原文件已保留。');
-    const result=empty(),seen=new Set();let damaged=!plain(raw)||raw.version!==1;
+    if(Number.isInteger(raw?.version)&&raw.version>catalogVersion)throw new Error('自定义预设配置版本较新，请升级换装器；原文件已保留。');
+    const result=empty(),seen=new Set();let damaged=!plain(raw)||![1,catalogVersion].includes(raw.version);
     for(const kind of kinds){if(!Array.isArray(raw?.[kind])){damaged=true;continue;}if(raw[kind].length>20)damaged=true;
       for(const entry of raw[kind].slice(0,20)){try{
         if(!plain(entry)||!idPattern.test(entry.id)||seen.has(entry.id)||customAssetId(entry.preview)!==entry.id)throw new Error('无效的预设记录');
         const item={id:entry.id,name:nameOf(entry.name),caption:kind==='theme'?'本地自定义皮肤':'本地导入素材',custom:true,preview:entry.preview};
-        if(kind==='theme'){if(!['light','dark'].includes(entry.scheme))throw new Error('无效的主题模式');item.scheme=entry.scheme;item.palette=paletteOf(entry.palette);if(!entry.preview.endsWith('.svg'))throw new Error('无效的主题预览');}
-        else{if(entry.asset!==entry.preview)throw new Error('无效的素材记录');item.asset=entry.asset;if(kind==='splash'){if(!['whale','stars','forest'].includes(entry.scene))throw new Error('无效的动画样式');item.scene=entry.scene;item.background=color(entry.background);}}
+        if(kind==='splash'&&entry.mediaType==='video'){
+          if(customAssetId(entry.asset)!==entry.id||!entry.asset.endsWith('.mp4')||!entry.preview.endsWith('.jpg')||!['contain','cover'].includes(entry.videoFit))throw new Error('无效的视频记录');
+          item.mediaType='video';item.asset=entry.asset;item.videoFit=entry.videoFit;item.duration=this.asset(item.asset).duration;item.caption='本地导入视频';
+        }else if(kind==='theme'){if(!['light','dark'].includes(entry.scheme))throw new Error('无效的主题模式');item.scheme=entry.scheme;item.palette=paletteOf(entry.palette);if(!entry.preview.endsWith('.svg'))throw new Error('无效的主题预览');}
+        else{if(entry.mediaType==='video'||entry.preview.endsWith('.mp4')||entry.asset!==entry.preview)throw new Error('无效的素材记录');item.asset=entry.asset;if(kind==='splash'){if(!['whale','stars','forest'].includes(entry.scene))throw new Error('无效的动画样式');item.scene=entry.scene;item.background=color(entry.background);}}
         this.asset(item.preview);result[kind].push(item);seen.add(item.id);
       }catch{damaged=true;}}
     }
     if(damaged){this.backup();this.warn('部分自定义预设或素材缺失、损坏，已保留备份并回退默认选项。');this.write(result);}
+    else if(raw.version!==catalogVersion)this.write(result);
     return result;
   }
   add(payload,catalog) {
     if(!plain(payload)||!kinds.includes(payload.kind))throw new Error('请选择启动画面、界面皮肤或桌面宠物');
     const kind=payload.kind;if(catalog[kind].length>=20)throw new Error('每个分类最多添加 20 个自定义预设，请先删除不需要的内容');
-    const id=`custom-${randomUUID()}`,name=nameOf(payload.name);let blob;
+    const id=`custom-${randomUUID()}`,name=nameOf(payload.name);let blob,video;
     const entry={id,name,caption:kind==='theme'?'本地自定义皮肤':'本地导入素材',custom:true};
-    if(kind==='theme'){if(!['light','dark'].includes(payload.scheme))throw new Error('主题模式必须是 light 或 dark');entry.scheme=payload.scheme;entry.palette=paletteOf(payload.palette);blob={data:themePreview(entry.palette),type:'image/svg+xml',ext:'svg'};}
+    if(payload.video!==undefined){
+      if(kind!=='splash')throw new Error('仅启动画面支持添加视频');
+      video=decodeVideo(payload.video);
+      if(payload.image?.type!=='image/jpeg')throw new Error('视频封面必须是 JPEG 图片');
+      blob=decodeImage(payload.image);entry.videoFit=payload.videoFit??'contain';
+      if(!['contain','cover'].includes(entry.videoFit))throw new Error('请选择保持完整或铺满的显示方式');
+      entry.mediaType='video';entry.duration=video.duration;entry.caption='本地导入视频';entry.asset=`custom-assets/${id}.mp4`;
+    }else if(kind==='theme'){if(!['light','dark'].includes(payload.scheme))throw new Error('主题模式必须是 light 或 dark');entry.scheme=payload.scheme;entry.palette=paletteOf(payload.palette);blob={data:themePreview(entry.palette),type:'image/svg+xml',ext:'svg'};}
     else{blob=decodeImage(payload.image);if(kind==='splash'){entry.scene=payload.scene??'whale';if(!['whale','stars','forest'].includes(entry.scene))throw new Error('请选择支持的动画样式');entry.background=color(payload.background??'#eef6ff');}}
-    entry.preview=`custom-assets/${id}.${blob.ext}`;if(kind!=='theme')entry.asset=entry.preview;
+    entry.preview=`custom-assets/${id}.${blob.ext}`;if(kind!=='theme'&&!video)entry.asset=entry.preview;
     mkdirSync(this.assetDir,{recursive:true,mode:0o700});if(lstatSync(this.assetDir).isSymbolicLink())throw new Error('自定义素材目录无效');
-    writeFileSync(join(this.dir,entry.preview),blob.data,{mode:0o600,flag:'wx'});
-    catalog[kind].push(entry);this.write(catalog);return catalog;
+    const created=[];
+    try {
+      for(const [path,content] of [[entry.preview,blob.data],...(video?[[entry.asset,video.data]]:[])]){
+        const file=join(this.dir,path),fd=openSync(file,'wx',0o600);created.push(file);
+        try{writeFileSync(fd,content);}finally{closeSync(fd);}
+      }
+      // Commit catalog last. A failed write cannot leave an imported half-preset.
+      this.write({...catalog,[kind]:[...catalog[kind],entry]});catalog[kind].push(entry);return catalog;
+    }catch(error){for(const file of created){try{unlinkSync(file);}catch{this.warn('导入失败，临时素材未能清理。');}}throw error;}
   }
   remove({kind,id}={},catalog) {
     if(!kinds.includes(kind)||!idPattern.test(id))throw new Error('只能删除自定义预设');
     const entry=catalog[kind].find(item=>item.id===id);if(!entry)throw new Error('自定义预设不存在');
     catalog[kind]=catalog[kind].filter(item=>item.id!==id);this.write(catalog);
-    try{unlinkSync(join(this.dir,entry.preview));}catch(error){if(error.code!=='ENOENT')this.warn('预设已移除，但旧素材文件未能删除。');}
+    for(const path of new Set([entry.preview,entry.asset].filter(Boolean))){try{const file=join(this.dir,path);unlinkSync(file);this.checked.delete(file);}catch(error){if(error.code!=='ENOENT')this.warn('预设已移除，但旧素材文件未能删除。');}}
     return catalog;
   }
-  read(id,catalog) {
+  read(id,catalog,variant='preview') {
     if(typeof id!=='string'||!idPattern.test(id))throw new Error('无效的自定义素材 ID');
+    if(!['preview','video'].includes(variant))throw new Error('无效的素材类型');
     const entry=kinds.flatMap(kind=>catalog[kind]).find(item=>item.id===id);if(!entry)throw new Error('自定义素材不存在');
-    const {file,type}=this.asset(entry.preview);return {data:readFileSync(file),type};
+    if(variant==='video'&&entry.mediaType!=='video')throw new Error('该预设没有视频素材');
+    const {file,type}=this.asset(variant==='video'?entry.asset:entry.preview);return {data:readFileSync(file),type};
   }
 }

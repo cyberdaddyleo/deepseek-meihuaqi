@@ -33,14 +33,18 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
   footer.append(actions); layer.append(decor, footer);
   document.head.append(style); document.body.append(layer);
 
-  // Both shipped movies are about seven seconds. This failure watchdog leaves
-  // decode/playback headroom; successful playback is completed by `ended`.
-  const MAX_VISIBLE_MS = 15000, FALLBACK_VISIBLE_MS = 4500, MEDIA_GRACE_MS = 2200;
+  // Shipped movies are about seven seconds; imported clips may be up to two
+  // minutes / 50 MiB. Give local loading headroom, then detect missing playback
+  // progress independently of duration so a stalled long clip cannot trap users.
+  const customVideo = preset.custom === true;
+  const MEDIA_GRACE_MS = customVideo ? 30000 : 2200;
+  const FALLBACK_VISIBLE_MS = 4500, STALL_MS = 8000;
+  let maxVisibleMs = customVideo ? 160000 : 15000;
   let closed = false, ready = false, video, frameRequest, timer, cleanupTimer, movieURL;
   const mediaRequest = new AbortController();
   let failedMedia = motion.matches, hasFrame = false;
   let soundBlocked = false, playAttempt = 0;
-  let visibleMs = 0, lastClock = performance.now();
+  let visibleMs = 0, lastClock = performance.now(), lastProgressMs = 0, lastMediaTime = -1;
   let wasVisible = document.visibilityState === 'visible';
   const observer = new MutationObserver(update);
   function clock() {
@@ -140,7 +144,11 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
     // Readiness remains internal; the original BootPage shows real loading or
     // errors after completion/skip. No decorative status text covers the movie.
     layer.dataset.ready = String(ready);
-    const deadline = failedMedia ? FALLBACK_VISIBLE_MS : MAX_VISIBLE_MS;
+    if (customVideo && hasFrame && video && video.currentTime > lastMediaTime + .01) {
+      lastMediaTime = video.currentTime; lastProgressMs = visibleMs;
+    }
+    if (customVideo && hasFrame && !failedMedia && visibleMs - lastProgressMs >= STALL_MS) { mediaFailed(); return; }
+    const deadline = failedMedia ? FALLBACK_VISIBLE_MS : maxVisibleMs;
     if (visibleMs >= deadline || (ready && failedMedia)) { finish(hasFrame && !failedMedia); return; }
     // A missing/stalled movie must not hold a ready work interface indefinitely.
     if (!hasFrame && !failedMedia && visibleMs >= MEDIA_GRACE_MS) { mediaFailed(); if (!ready) finish(); return; }
@@ -148,6 +156,7 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
     if (document.visibilityState !== 'visible') return;
     const waits = [deadline - visibleMs];
     if (!hasFrame && !failedMedia) waits.push(MEDIA_GRACE_MS - visibleMs);
+    if (customVideo && hasFrame && !failedMedia) waits.push(500);
     timer = setTimeout(update, Math.max(1, Math.min(...waits)));
   }
   skip.onclick = leave;
@@ -162,7 +171,7 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
   window.addEventListener('pagehide', leave, { once: true });
   observer.observe(document.documentElement, {childList:true,subtree:true});
   // A never-shown/abandoned window must not retain decoding or observers forever.
-  const abandonTimer = setTimeout(leave, 30000);
+  const abandonTimer = setTimeout(leave, customVideo ? 190000 : 30000);
   if (!failedMedia) {
     video = document.createElement('video'); video.className = 'cyber-boot-video';
     video.muted = false; video.defaultMuted = false; video.volume = 1;
@@ -172,7 +181,13 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
     video.poster = assetURL(preset.preview);
     video.onerror = mediaFailed;
     // A new media element starts at zero. Do not seek or speed up the original.
-    video.onloadedmetadata = play;
+    video.onloadedmetadata = () => {
+      if (customVideo) {
+        if (!Number.isFinite(video.duration) || video.duration <= 0 || video.duration > 120.25) { mediaFailed(); return; }
+        maxVisibleMs = MEDIA_GRACE_MS + Math.ceil(video.duration * 1000) + STALL_MS;
+      }
+      play();
+    };
     video.onseeked = play;
     video.onplaying = () => { firstFrame(); update(); };
     video.onwaiting = update;
@@ -181,7 +196,7 @@ export function mountVideoStartup(preset, assetURL, fallbackData) {
     video.onended = () => finish(true);
     decor.append(video);
     // dsh-app's stream proxy strips Content-Length, leaving Chromium with a
-    // 0..0 seekable range. A small local Blob supplies an exact length without
+    // 0..0 seekable range. A bounded local Blob supplies an exact length without
     // changing the signed app, the source movie, or the authenticated route.
     void (async () => {
       try {

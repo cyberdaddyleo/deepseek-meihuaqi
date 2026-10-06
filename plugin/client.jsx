@@ -35,7 +35,7 @@ export function apply(ctx) {
     return state;
   }
   async function call(endpoint, payload) {
-    const response = await fetch('/api/cyberdaddy', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint,payload}),signal:AbortSignal.timeout(10000)});
+    const response = await fetch('/api/cyberdaddy', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint,payload}),signal:AbortSignal.timeout(endpoint === 'add-preset' ? 90000 : 10000)});
     const result = await response.json();
     if (!result.ok) throw new Error(result.error.message);
     return result.value;
@@ -54,7 +54,7 @@ export function apply(ctx) {
     const ref = useRef(null);
     useEffect(() => {
       const unmount = mountManager(ref.current, api, {assetResolver:path=>{
-        const id=customAssetId(path),builtinId=builtinAssetId(path);return id?'/api/cyberdaddy/asset?id='+encodeURIComponent(id):builtinId?'/api/cyberdaddy/builtin?id='+encodeURIComponent(builtinId):assets[path];
+        const id=customAssetId(path),builtinId=builtinAssetId(path);return id?'/api/cyberdaddy/asset?id='+encodeURIComponent(id)+(path.endsWith('.mp4')?'&variant=video':''):builtinId?'/api/cyberdaddy/builtin?id='+encodeURIComponent(builtinId):assets[path];
       }});
       return unmount;
     }, []);

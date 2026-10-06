@@ -45,7 +45,7 @@ test('missing or damaged assets are omitted and applied choices safely fall back
 
 test('corrupt catalog gets a backup; future catalogs cannot be overwritten',()=>{
  const s=fresh(),file=join(s.file,'..','custom-presets.json');writeFileSync(file,'{invalid');assert.equal(s.get().custom.pet.length,0);assert.ok(readdirSync(join(s.file,'..')).some(n=>n.startsWith('custom-presets.broken-')));
- const future=JSON.stringify({version:2,pet:[]});writeFileSync(file,future);assert.throws(()=>s.addPreset({kind:'pet',name:'new',image:image()}),/版本较新/);assert.equal(readFileSync(file,'utf8'),future);
+ const future=JSON.stringify({version:3,pet:[]});writeFileSync(file,future);assert.throws(()=>s.addPreset({kind:'pet',name:'new',image:image()}),/版本较新/);assert.equal(readFileSync(file,'utf8'),future);
 });
 
 test('each category enforces its own twenty-preset limit',()=>{
@@ -77,4 +77,50 @@ test('parallel process imports keep both libraries and independent appearance up
  const {spawn}=await import('node:child_process'),s=fresh(),moduleUrl=new URL('../desktop/settings.mjs',import.meta.url).href,dir=join(s.file,'..');
  const run=kind=>new Promise((resolve,reject)=>{const script=`import {Store} from ${JSON.stringify(moduleUrl)};const store=new Store(${JSON.stringify(dir)});for(let i=0;i<5;i++)store.addPreset({kind:${JSON.stringify(kind)},name:'parallel '+i,image:${JSON.stringify(image())}});store.update(${kind==='pet'?'{pet:{size:240}}':"{theme:'forest'}"});`;const child=spawn(process.execPath,['--input-type=module','-e',script],{stdio:['ignore','ignore','pipe']});let error='';child.stderr.on('data',d=>error+=d);child.on('error',reject);child.on('exit',code=>code===0?resolve():reject(new Error(error)));});
  await Promise.all([run('pet'),run('splash')]);const state=s.get();assert.equal(state.custom.pet.length,5);assert.equal(state.custom.splash.length,5);assert.equal(state.pet.size,240);assert.equal(state.theme,'forest');
+});
+
+const mp4 = () => readFileSync(new URL('../assets/whalegirl-startup.mp4',import.meta.url));
+const videoPayload = (data=mp4()) => ({kind:'splash',name:'我的启动视频',video:{name:'opening.mp4',type:'video/mp4',dataUrl:'data:video/mp4;base64,'+data.toString('base64')},image:{name:'poster.jpg',type:'image/jpeg',dataUrl:'data:image/jpeg;base64,'+bitmapFixtures['image/jpeg']},videoFit:'contain'});
+test('custom MP4 retains video and poster separately, restores duration and independent selections, and removes both files',()=>{
+ const s=fresh();s.update({theme:'forest',pet:{id:'cat',size:180}});const state=s.addPreset(videoPayload()),p=state.custom.splash[0];
+ assert.equal(p.mediaType,'video');assert.match(p.asset,/\.mp4$/);assert.match(p.preview,/\.jpg$/);assert.equal(p.videoFit,'contain');assert.ok(p.duration>6&&p.duration<8);assert.equal(state.splash,'whalegirl');
+ assert.equal(s.readAsset(p.id).type,'image/jpeg');assert.equal(s.readAsset(p.id,'video').type,'video/mp4');assert.deepEqual(s.readAsset(p.id,'video').data,mp4());
+ s.update({splash:p.id});const restarted=new Store(s.dir).get();assert.equal(restarted.splash,p.id);assert.equal(restarted.theme,'forest');assert.equal(restarted.pet.id,'cat');assert.equal(restarted.pet.size,180);assert.equal(restarted.custom.splash[0].duration,p.duration);
+ assert.throws(()=>s.readAsset(p.id,'../../appearance.json'),/类型|variant|素材/);
+ s.removePreset({kind:'splash',id:p.id});assert.equal(s.get().splash,'whalegirl');assert.equal(s.get().theme,'forest');assert.equal(readdirSync(join(s.dir,'custom-assets')).length,0);
+});
+test('video import rejects invalid media and duration, pet video and excessive size without writing assets',()=>{
+ const s=fresh(),original=mp4();
+ for(const data of [Buffer.from('not mp4'),original.subarray(0,original.length-1),Buffer.from(bitmapFixtures['image/jpeg'],'base64')])assert.throws(()=>s.addPreset(videoPayload(data)),/MP4|视频/);
+ const tooLong=Buffer.from(original),mvhd=tooLong.indexOf(Buffer.from('mvhd'));assert.ok(mvhd>0);assert.equal(tooLong[mvhd+4],0);const timescale=tooLong.readUInt32BE(mvhd+16);tooLong.writeUInt32BE(timescale*121,mvhd+20);assert.throws(()=>s.addPreset(videoPayload(tooLong)),/120/);
+ assert.throws(()=>s.addPreset({...videoPayload(),kind:'pet'}),/启动画面/);
+ assert.throws(()=>s.addPreset({...videoPayload(),videoFit:'stretch'}),/显示|填充|适配/);
+ assert.throws(()=>s.addPreset(videoPayload(Buffer.alloc(50*1024*1024+1))),/50 MiB/);
+ assert.throws(()=>s.addPreset({...videoPayload(),image:image()}),/JPEG|封面/);
+ assert.equal(s.get().custom.splash.length,0);assert.equal(s.get().custom.pet.length,0);
+});
+test('damaged or linked custom video safely falls back while preserving the unrelated theme',()=>{
+ const s=fresh();s.addPreset(videoPayload());const p=s.get().custom.splash[0];s.update({splash:p.id,theme:'forest'});writeFileSync(join(s.dir,p.asset),'broken video');assert.equal(s.get().splash,'whalegirl');assert.equal(s.get().theme,'forest');assert.equal(s.get().custom.splash.length,0);
+ s.addPreset(videoPayload());const second=s.get().custom.splash[0];unlinkSync(join(s.dir,second.asset));symlinkSync(new URL('../assets/whalegirl-startup.mp4',import.meta.url),join(s.dir,second.asset));assert.equal(s.get().custom.splash.length,0);assert.throws(()=>s.readAsset(second.id,'video'),/不存在/);
+});
+test('failed catalog commit rolls back both imported media files and in-memory entries',()=>{
+ const s=fresh(),catalog=s.get().custom;const originalWrite=s.custom.write;s.custom.write=()=>{throw new Error('disk write failed');};
+ assert.throws(()=>s.custom.add(videoPayload(),catalog),/disk write failed/);assert.equal(catalog.splash.length,0);assert.equal(readdirSync(join(s.dir,'custom-assets')).length,0);s.custom.write=originalWrite;
+});
+
+
+test('version 1 image catalogs migrate to version 2 without changing presets or appearance selections',()=>{
+ const s=fresh();s.addPreset({kind:'splash',name:'原有图片启动页',image:image(),scene:'stars',background:'#e5f0ff'});s.addPreset({kind:'pet',name:'原有伙伴',image:image()});
+ const before=s.get();s.update({splash:before.custom.splash[0].id,theme:'forest',pet:{id:before.custom.pet[0].id,enabled:true}});
+ const file=join(s.dir,'custom-presets.json'),legacy=JSON.parse(readFileSync(file,'utf8'));legacy.version=1;writeFileSync(file,JSON.stringify(legacy));
+ const migrated=new Store(s.dir).get();assert.deepEqual(migrated.custom,before.custom);assert.equal(migrated.splash,before.custom.splash[0].id);assert.equal(migrated.pet.id,before.custom.pet[0].id);assert.equal(migrated.theme,'forest');assert.equal(migrated.pet.enabled,true);
+ assert.equal(JSON.parse(readFileSync(file,'utf8')).version,2);assert.ok(!readdirSync(s.dir).some(name=>name.startsWith('custom-presets.broken-')));
+});
+test('video catalog declares schema 2 so version 1 readers reject before cleanup; deleting video never downgrades it',()=>{
+ const s=fresh();s.addPreset(videoPayload());const p=s.get().custom.splash[0],file=join(s.dir,'custom-presets.json');
+ const disk=JSON.parse(readFileSync(file,'utf8'));assert.equal(disk.version,2);assert.equal(disk.splash[0].mediaType,'video');
+ // v0.8.2 rejects numeric schema versions > 1 before inspecting records or repairing files.
+ assert.ok(Number.isInteger(disk.version)&&disk.version>1,'must activate the old reader forward-version guard');
+ assert.equal(new Store(s.dir).get().custom.splash[0].id,p.id);
+ s.removePreset({kind:'splash',id:p.id});assert.equal(JSON.parse(readFileSync(file,'utf8')).version,2);
 });

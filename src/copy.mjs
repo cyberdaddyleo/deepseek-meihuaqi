@@ -27,7 +27,7 @@ export const copy = {
     pet: "认真工作，也有人陪。",
   },
   notes: {
-    splash: "视频预设完整播放约 7 秒后进入 Harness，可点击跳过或按 Esc。",
+    splash: "支持导入本地视频；完整播放后进入 Harness，可点击跳过或按 Esc。",
     theme: "即时应用到真实 Harness，不打断会话与任务。",
     pet: "拖动调整位置，单击打招呼，右键打开菜单。",
   },

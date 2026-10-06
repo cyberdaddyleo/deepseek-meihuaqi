@@ -4,7 +4,7 @@ export function catalogFor(state, kind) {
   return [...(builtin[kind] || []), ...(Array.isArray(state?.custom?.[kind]) ? state.custom[kind] : [])];
 }
 export function customAssetId(path) {
-  return typeof path === 'string' ? /^custom-assets\/(custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(?:png|jpg|webp|gif|svg)$/.exec(path)?.[1] || null : null;
+  return typeof path === 'string' ? /^custom-assets\/(custom-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\.(?:png|jpg|webp|gif|svg|mp4)$/.exec(path)?.[1] || null : null;
 }
 export function builtinAssetId(path) {
   return typeof path === 'string' ? /^assets\/(whalegirl-(?:wallpaper|atlas)|cyberdad-(?:logo|atlas|wallpaper)|geek-wallpaper)\.png$/.exec(path)?.[1] || /^assets\/((?:whalegirl|cyberdad|geek)-startup)\.mp4$/.exec(path)?.[1] || null : null;

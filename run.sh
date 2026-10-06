@@ -30,7 +30,7 @@ case "$TASK" in
  test) exec "$NODE_BIN" --test tests/*.test.mjs;;
  test:pet-behavior) exec "$NODE_BIN" tests/pet-behavior-ui.mjs "$@";;
  test:geek-hud) exec "$NODE_BIN" tests/geek-hud-native.mjs "$@";;
- test:video-startup|test:geek-video|test:geek-native|test:cyberdad-video|test:cyberdad-native|test:cyberdad-pet|test:whalegirl-pet|test:whalegirl-native|test:pet-sound-browser|test:pet|test:native|test:startup|test:custom-manager|test:custom-pet-store|test:native-custom|test:native-custom-startup) exec "$NODE_BIN" "tests/${TASK#test:}.mjs" "$@";;
+ test:custom-video-manager|test:custom-video-startup|test:video-startup|test:geek-video|test:geek-native|test:cyberdad-video|test:cyberdad-native|test:cyberdad-pet|test:whalegirl-pet|test:whalegirl-native|test:pet-sound-browser|test:pet|test:native|test:startup|test:custom-manager|test:custom-pet-store|test:native-custom|test:native-custom-startup) exec "$NODE_BIN" "tests/${TASK#test:}.mjs" "$@";;
  test:install-browser) exec "$NODE_BIN" node_modules/playwright/cli.js install chromium;;
  *) echo '命令：setup / install / start / pet / uninstall / doctor / build / test / test:pet / test:pet-behavior / test:cyberdad-pet / test:native / test:startup / test:custom-manager / test:custom-pet-store / test:native-custom / test:native-custom-startup / test:install-browser'; exit 1;;
 esac

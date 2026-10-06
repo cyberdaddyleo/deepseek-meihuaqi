@@ -112,9 +112,16 @@ export function mountManager(
       });
       return;
     }
-    let video;
+    let video, movieURL, mediaTimer, previewClosed = false;
+    const mediaRequest = new AbortController();
+    const releaseVideo = () => {
+      clearTimeout(mediaTimer);
+      mediaRequest.abort();
+      if (video) { video.onerror = null; video.pause(); video.removeAttribute('src'); video.removeAttribute('poster'); video.load(); }
+      if (movieURL) { URL.revokeObjectURL(movieURL); movieURL = null; }
+    };
     const modal = createModal({title: `${t.name}预览`, className: "cb-splash-modal", onClose: () => {
-      if(video){video.onerror=null;video.pause();video.removeAttribute('src');video.load();}
+      previewClosed = true; releaseVideo();
       overlays.delete(modal.close);
     }});
     overlays.add(modal.close);
@@ -122,18 +129,34 @@ export function mountManager(
       modal.dialog.classList.add('cb-video-preview');
       modal.dialog.innerHTML=`<video playsinline controls aria-label="${escape(t.name)}"></video><p role="alert" hidden>视频加载失败，请检查本地素材。</p><button>${c.close}</button>`;
       video=modal.dialog.querySelector('video');video.muted=false;video.volume=1;
+      video.style.objectFit = t.videoFit === 'contain' ? 'contain' : 'cover';
       const fail=()=>{
-        if(!video.isConnected)return;
-        video.onerror=null;video.pause();video.removeAttribute('src');video.load();video.hidden=true;
+        if(previewClosed||!video.isConnected)return;
+        releaseVideo();video.hidden=true;
         modal.dialog.querySelector('[role="alert"]').hidden=false;
       };
       video.onerror=fail;
       modal.dialog.querySelector('button').onclick=modal.close;
       modal.dialog.querySelector('button').focus();
-      Promise.all([asset(t.asset),asset(t.preview)]).then(([src,poster])=>{
-        if(!alive||!video.isConnected)return;
-        video.poster=poster;video.src=src;
-        if(!matchMedia('(prefers-reduced-motion: reduce)').matches)void video.play().catch(()=>{});
+      mediaTimer = setTimeout(fail, 30000);
+      // The native dsh stream proxy may have no seekable range. Fetching one
+      // Blob makes custom and built-in previews seekable with the same decoder.
+      Promise.all([asset(t.asset),asset(t.preview)]).then(async ([src,poster])=>{
+        if(!alive||previewClosed||!video.isConnected)return;
+        video.poster=poster;
+        const response=await fetch(src,{signal:mediaRequest.signal});
+        if(!response.ok)throw new Error('Preview media unavailable');
+        const movie=await response.blob();
+        if(!alive||previewClosed||mediaRequest.signal.aborted||!video.isConnected)return;
+        clearTimeout(mediaTimer);
+        movieURL=URL.createObjectURL(movie);video.src=movieURL;
+        if(!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          try { await video.play(); }
+          catch(error) {
+            if(previewClosed||mediaRequest.signal.aborted)return;
+            if(error.name==='NotAllowedError') { video.muted=true; await video.play().catch(()=>{}); }
+          }
+        }
       }).catch(fail);
       return;
     }

@@ -133,7 +133,7 @@ try{
  await splashForm.getByLabel('名称',{exact:true}).fill('自己的启动画面');
  await splashForm.getByLabel('背景颜色').fill('#ddeeff');
  await splashForm.getByLabel('动态风格').selectOption('stars');
- await splashForm.getByLabel('选择图片').setInputFiles({name:'morning.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="#88bbff"/></svg>')});
+ await splashForm.getByLabel('选择视频或图片').setInputFiles({name:'morning.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="#88bbff"/></svg>')});
  await splashForm.locator('.cb-upload-preview img').waitFor();
  await splashForm.getByRole('button',{name:'保存到我的预设'}).click();
  await page.locator('[data-preset="custom-4"]').waitFor();

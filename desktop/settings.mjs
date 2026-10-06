@@ -101,7 +101,7 @@ export class Store {
       return this.save(current, custom);
     });
   }
-  readAsset(id) {
-    return this.locked(() => this.custom.read(id, this.read().custom));
+  readAsset(id,variant='preview') {
+    return this.locked(() => this.custom.read(id, this.read().custom,variant));
   }
 }

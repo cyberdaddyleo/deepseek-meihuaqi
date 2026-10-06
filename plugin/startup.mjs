@@ -10,15 +10,15 @@ if (state?.enabled && state.splash !== 'off') {
   const preset = catalogFor(state, 'splash').find(x => x.id === state.splash) || splashes.find(x => x.id === defaults.splash);
   const assetURL = path => {
     const custom = customAssetId(path), builtin = builtinAssetId(path);
-    return custom ? '/api/cyberdaddy/asset?id=' + encodeURIComponent(custom)
+    return custom ? '/api/cyberdaddy/asset?id=' + encodeURIComponent(custom) + (path.endsWith('.mp4') ? '&variant=video' : '')
       : builtin ? '/api/cyberdaddy/builtin?id=' + encodeURIComponent(builtin)
       : assets[path] || assets['assets/whale.svg'] || fallbackData;
   };
-  if (preset.mediaType === 'video' && builtinAssetId(preset.asset) && preset.asset.endsWith('.mp4')) mountVideoStartup(preset, assetURL, fallbackData);
+  if (preset.mediaType === 'video' && (builtinAssetId(preset.asset) || (preset.custom && customAssetId(preset.asset))) && preset.asset.endsWith('.mp4')) mountVideoStartup(preset, assetURL, fallbackData);
   else mountSvgStartup(preset, assetURL);
 }
 
-// SVG decorations retain their immediate native-ready handoff. Built-in movies
+// SVG decorations retain their immediate native-ready handoff. Local movies
 // have an independent overlay so native readiness cannot cut playback short.
 function mountSvgStartup(preset, assetURL) {
   let root, decor, style, skip, seen = false, closed = false;
