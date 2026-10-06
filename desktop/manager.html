@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>桌宠管理 · 赛博老爸</title>
+    <link rel="stylesheet" href="../src/manager.css" />
+    <link rel="stylesheet" href="../src/scenes.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #eef5fc;
+      }
+      .cb-toolbox {
+        min-height: calc(100vh - 48px);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="manager"></div>
+    <script type="module" src="manager.mjs"></script>
+  </body>
+</html>

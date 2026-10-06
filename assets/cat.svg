@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <g data-creature="cat">
+    <g class="tail cat-tail"><path d="M167 172c45 9 53-38 27-38" stroke="#b89875" stroke-width="20" stroke-linecap="round"/><path d="M167 172c45 9 53-38 27-38" stroke="#ebd7b4" stroke-width="13" stroke-linecap="round"/></g>
+    <g class="cat-body"><path d="M73 131c-8 15-14 38-12 49 2 23 26 27 57 27 29 0 53-7 53-28 0-15-9-38-15-48" fill="#f3e7cc" stroke="#9a8067" stroke-width="3.5"/><ellipse cx="120" cy="183" rx="29" ry="20" fill="#fff6e3"/></g>
+    <g class="cat-foot-left"><path d="M81 192c-8 7-8 17 6 18h12c9-1 10-9 3-16" fill="#fff1d6" stroke="#bda080" stroke-width="3" stroke-linecap="round"/><path d="M87 202v5m7-5v5" stroke="#d0b492" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="cat-foot-right"><path d="M137 192c-8 7-8 17 6 18h12c9-1 10-9 3-16" fill="#fff1d6" stroke="#bda080" stroke-width="3" stroke-linecap="round"/><path d="M143 202v5m7-5v5" stroke="#d0b492" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="pet-head cat-head">
+      <path d="m61 94-2-47c16 0 30 14 38 24 14-4 26-4 40 0 10-16 23-23 39-25l-2 48c8 9 13 19 13 31 0 27-26 42-67 42-39 0-66-14-66-42 0-13 1-23 7-31Z" fill="#fff1d6" stroke="#9a8067" stroke-width="3.5" stroke-linejoin="round"/>
+      <path class="cat-ears" d="m68 62 1 25 16-8m76-17-1 25-15-7" fill="#e6b7aa"/><path d="m108 75 3 14m14-15 1 14" stroke="#d5b788" stroke-width="5" stroke-linecap="round"/>
+      <g class="eyes" fill="#605344"><ellipse cx="89" cy="119" rx="4.5" ry="6.5"/><ellipse cx="149" cy="119" rx="4.5" ry="6.5"/></g>
+      <g class="sleep-eyes" style="display:none" stroke="#605344" stroke-width="3" stroke-linecap="round"><path d="M81 119q8 6 16 0"/><path d="M141 119q8 6 16 0"/></g>
+      <path d="m114 132 6 5 6-5" fill="#c98f8d"/><path class="mouth-normal" d="M120 137q-4 8-11 2m11-2q4 8 11 2" stroke="#8c7460" stroke-width="2.5" stroke-linecap="round"/><ellipse class="mouth-yawn" style="display:none" cx="120" cy="143" rx="6" ry="9" fill="#a97873"/>
+      <path d="m66 131 12 2m-13 6 13-1m85-5 13-2m-12 7 13 2" stroke="#bda080" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="82" cy="134" rx="8" ry="4" fill="#efbdac" opacity=".65"/><ellipse cx="157" cy="134" rx="8" ry="4" fill="#efbdac" opacity=".65"/>
+    </g>
+    <!-- Separate forelegs stay visible above the belly; hind feet remain below. -->
+    <g class="cat-paw cat-paw-left"><path d="M88 166c-9-1-12 7-9 16l3 7c6 7 12 6 17 0 3-4 2-8 0-13l-2-5c-2-4-5-5-9-5Z" fill="#fff1d6" stroke="#bda080" stroke-width="3" stroke-linejoin="round"/><path d="m86 184 1 5m5-6 1 5" stroke="#d0b492" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="cat-paw cat-paw-right"><path d="M152 166c9-1 12 7 9 16l-3 7c-6 7-12 6-17 0-3-4-2-8 0-13l2-5c2-4 5-5 9-5Z" fill="#fff1d6" stroke="#bda080" stroke-width="3" stroke-linejoin="round"/><path d="m154 184-1 5m-5-6-1 5" stroke="#d0b492" stroke-width="2" stroke-linecap="round"/></g>
+  </g>
+</svg>

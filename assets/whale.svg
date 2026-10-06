@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <defs><linearGradient id="whale-body" x1="72" y1="63" x2="143" y2="184" gradientUnits="userSpaceOnUse"><stop stop-color="#9ddfff"/><stop offset="1" stop-color="#5095df"/></linearGradient></defs>
+  <g data-creature="whale">
+    <g class="tail whale-tail"><path d="M177 122c23-4 25-23 22-39 18 7 28 29 15 48-7 11-20 18-34 18" fill="#6aafe9" stroke="#316b9f" stroke-width="3.5" stroke-linejoin="round"/></g>
+    <g class="whale-body"><path d="M40 124c0-34 25-61 67-61 40 0 76 26 76 65 0 43-36 61-75 61-40 0-68-23-68-65Z" fill="url(#whale-body)" stroke="#316b9f" stroke-width="3.5"/><path d="M45 145c26 23 81 28 126 0-8 27-32 39-62 39-31 0-54-13-64-39Z" fill="#dbf5ff"/><path d="M62 99q10-17 28-21" stroke="#dff7ff" stroke-width="6" stroke-linecap="round" opacity=".8"/></g>
+    <path class="whale-fin" d="M119 148c4 18 18 25 34 18" fill="#71b7ec" stroke="#316b9f" stroke-width="3" stroke-linecap="round"/>
+    <g class="eyes"><ellipse cx="72" cy="122" rx="5" ry="7" fill="#244966"/><circle cx="73" cy="120" r="1.6" fill="white"/></g>
+    <path class="sleep-eyes" style="display:none" d="M65 123q7 5 14 0" stroke="#244966" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="62" cy="137" rx="10" ry="5" fill="#f1b9c5" opacity=".8"/><path class="mouth-normal" d="M84 139q9 7 17-2" stroke="#316b9f" stroke-width="3" stroke-linecap="round"/><ellipse class="mouth-yawn" style="display:none" cx="94" cy="139" rx="5" ry="6" fill="#316b9f"/>
+    <g class="whale-spout"><path d="M111 59q-16-8-15-20m15 20q1-28 13-27" stroke="#75c7f1" stroke-width="7" stroke-linecap="round"/><circle cx="91" cy="28" r="5" fill="#a5e2fa"/><circle cx="136" cy="40" r="4" fill="#a5e2fa"/></g>
+  </g>
+</svg>

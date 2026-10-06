@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "kind": "theme",
+  "name": "紫藤轻雾",
+  "scheme": "light",
+  "palette": {
+    "base": "#faf7ff",
+    "surface": "#ffffff",
+    "sidebar": "#f0eaf8",
+    "soft": "#f1ebfa",
+    "selected": "#e4daf5",
+    "text": "#352d4a",
+    "muted": "#706581",
+    "accent": "#6d4fad",
+    "border": "#ded4ec",
+    "code": "#f1ecf8"
+  }
+}

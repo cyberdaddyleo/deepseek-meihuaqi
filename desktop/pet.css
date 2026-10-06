@@ -1,0 +1,323 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent !important; user-select: none; }
+body { pointer-events: none; --pet-scale: .98; }
+body[data-pet="custom"] { --pet-scale: .8; }
+#creature {
+  position: relative; width: 100%; height: 100%;
+  transform: scale(var(--pet-scale)); transform-origin: 50% 65%;
+  animation: pet-float 5s ease-in-out infinite; pointer-events: none;
+}
+body[data-pet="custom"] #creature { transform-origin: 50% 45%; }
+body[data-pet="whale"] #creature { animation-duration: 6s; }
+body[data-pet="cat"] #creature { animation: cat-rest 9s ease-in-out infinite; }
+svg { width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+svg path, svg circle, svg ellipse, svg rect { pointer-events: visiblePainted; cursor: grab; }
+.pet-custom-image, .pet-custom-frozen { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; pointer-events: auto; cursor: grab; }
+.pet-custom-image[hidden], .pet-custom-frozen[hidden] { display: none; }
+.pet-custom-frozen { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); object-fit: fill; }
+svg .eyes { transform-origin: center; transform-box: fill-box; animation: pet-blink 6.8s infinite; }
+svg .pet-head { transform-origin: 120px 140px; }
+svg .robot-arm-left { transform-origin: 74px 157px; }
+svg .robot-arm-right { transform-origin: 168px 157px; }
+svg .robot-leg-left { transform-origin: 91px 192px; }
+svg .robot-leg-right { transform-origin: 149px 192px; }
+svg .antenna-light { animation: antenna-idle 7s ease-in-out infinite; }
+svg .cat-tail { transform-origin: 167px 172px; animation: cat-tail 5s ease-in-out infinite; }
+svg .cat-paw-left { transform-origin: 88px 168px; }
+svg .cat-paw-right { transform-origin: 152px 168px; }
+svg .cat-body { transform-origin: 120px 195px; }
+svg .cat-foot-left { transform-origin: 92px 194px; }
+svg .cat-foot-right { transform-origin: 148px 194px; }
+svg .whale-tail { transform-origin: 177px 137px; animation: whale-tail 4.8s ease-in-out infinite; }
+svg .whale-fin { transform-origin: 119px 148px; animation: fin-idle 5.5s ease-in-out infinite; }
+svg .whale-spout { transform-origin: 111px 59px; animation: spout-idle 6s ease-in-out infinite; }
+
+body[data-mood="drowsy"] #creature { animation: pet-drowsy 5s ease-in-out infinite; }
+body[data-mood="drowsy"] svg .eyes { animation: none; transform: scaleY(.42); }
+body[data-mood="drowsy"] svg .tail { animation-duration: 8s; }
+body[data-mood="sleeping"] #creature { animation: pet-breathe 5.5s ease-in-out infinite; }
+body[data-mood="sleeping"] svg .eyes, body[data-action="love"] svg .eyes { display: none; }
+body[data-mood="sleeping"] svg .sleep-eyes, body[data-action="love"] svg .sleep-eyes { display: inline !important; }
+body[data-mood="sleeping"] svg .tail, body[data-mood="sleeping"] svg .whale-fin { animation: none; }
+body[data-mood="sleeping"] svg .whale-spout { animation: none; opacity: .25; }
+body[data-mood="sleeping"] svg .antenna-light { animation: none; fill: #9dc6d9; }
+body[data-mood="sleeping"] svg .robot-arm-right { transform: rotate(48deg); }
+body[data-mood="sleeping"] svg .robot-arm-left { transform: rotate(-12deg); }
+
+body[data-action="look"] #creature { animation: pet-look 1.5s ease-in-out both; }
+body[data-action="look"] .robot-head { animation: robot-think 1.5s ease-in-out both; }
+body[data-action="look"] .antenna-light { animation: antenna-thinking .75s ease-in-out 2; }
+body[data-action="look"] .cat-head { animation: cat-listen 1.5s ease-in-out both; }
+body[data-action="stretch"] #creature { animation: pet-stretch 1.8s ease-in-out both; }
+body[data-action="stretch"] .robot-arm-left { animation: robot-stretch-left 1.8s ease-in-out both; }
+body[data-action="stretch"] .robot-arm-right { animation: robot-stretch-right 1.8s ease-in-out both; }
+body[data-action="stretch"] .cat-body { animation: cat-body-stretch 1.8s ease-in-out both; }
+body[data-action="stretch"] .cat-paw-right { animation: cat-paw-stretch 1.8s ease-in-out both; }
+body[data-action="stretch"] .cat-paw-left { animation: cat-paw-stretch-left 1.8s ease-in-out both; }
+body[data-action="stretch"] .whale-fin { animation: whale-wave 1.8s ease-in-out both; }
+body[data-action="wave"] #creature { animation: pet-greet 1.5s ease-in-out both; }
+body[data-action="wave"] .robot-arm-right { animation: robot-wave 1.5s ease-in-out both; }
+body[data-action="wave"] .antenna-light { animation: antenna-thinking .75s ease-in-out 2; }
+body[data-action="wave"] .cat-paw-right { animation: cat-wash 1.5s ease-in-out both; }
+body[data-action="wave"] .cat-head { animation: cat-listen 1.5s ease-in-out both; }
+body[data-action="wave"] .whale-fin { animation: whale-wave 1.5s ease-in-out both; }
+body[data-action="wave"] .whale-spout { animation: spout-greet 1.5s ease-out both; }
+body[data-action="wiggle"] #creature { animation: pet-wiggle 1.2s ease-in-out both; }
+body[data-action="wiggle"] .tail { animation-duration: .4s; }
+body[data-action="hop"] #creature, .happy:not([data-action]) #creature { animation: pet-hop .85s ease-in-out both; }
+body[data-action="spin"] #creature { transform-origin: 50% 50%; animation: pet-spin 1.1s ease-in-out both; }
+body[data-action="love"] #creature { animation: pet-love 1.2s ease-in-out both; }
+body[data-action="love"] .antenna-light { fill: #e8b7d7; animation: none; }
+body[data-action="surprise"] #creature { animation: pet-surprise .85s ease-in-out both; }
+body[data-action="surprise"] .eyes { animation: none; transform: scaleY(1.25); }
+body[data-action="surprise"] .mouth-normal, body[data-action="yawn"] .mouth-normal { display: none; }
+body[data-action="surprise"] .mouth-yawn, body[data-action="yawn"] .mouth-yawn { display: inline !important; }
+body[data-action="yawn"] #creature { animation: pet-yawn 1.8s ease-in-out both; }
+body[data-action="yawn"] .eyes { animation: none; transform: scaleY(.2); }
+body[data-action="wake"] #creature { animation: pet-wake 1.8s ease-in-out both; }
+body[data-action="wake"] .eyes { animation: wake-eyes 1.8s ease-in-out both; }
+body[data-action="wake"] .robot-arm-left { animation: robot-stretch-left 1.8s ease-in-out both; }
+body[data-action="wake"] .robot-arm-right { animation: robot-stretch-right 1.8s ease-in-out both; }
+body[data-action="wake"] .cat-paw-right { animation: cat-paw-stretch 1.8s ease-in-out both; }
+body[data-action="wake"] .cat-paw-left { animation: cat-paw-stretch-left 1.8s ease-in-out both; }
+body[data-action="drag"] #creature, .dragging #creature { animation: pet-dangle 1.7s ease-in-out infinite; }
+body[data-action="drag"] .robot-arm-left { transform: rotate(-24deg); }
+body[data-action="drag"] .robot-arm-right { transform: rotate(65deg); }
+body[data-action="drag"] .robot-leg-left { animation: loose-leg 1s ease-in-out infinite alternate; }
+body[data-action="drag"] .robot-leg-right { animation: loose-leg 1s .3s ease-in-out infinite alternate-reverse; }
+body[data-action="drag"] .cat-paw-right { transform: translate(1px, 7px) rotate(9deg); }
+body[data-action="drag"] .cat-paw-left { transform: translate(-1px, 7px) rotate(-9deg); }
+body[data-action="drag"] .cat-tail { animation-duration: 1.5s; }
+body[data-action="drag"] .whale-fin { transform: rotate(20deg); animation: none; }
+body[data-action="land"] #creature { animation: pet-land .55s ease-out both; }
+/* All travel and mirroring stay in this root matrix for custom-image alpha hits. */
+body[data-action="walk"] #creature { animation: pet-walk 6s linear both; }
+body[data-action="walk"] .robot-leg-left, body[data-action="walk"] .cat-foot-left { animation: step-left .5s ease-in-out 12; }
+body[data-action="walk"] .robot-leg-right, body[data-action="walk"] .cat-foot-right { animation: step-right .5s ease-in-out 12; }
+body[data-action="walk"] .robot-arm-left { animation: walk-arm-left .5s ease-in-out 12; }
+body[data-action="walk"] .robot-arm-right { animation: walk-arm-right .5s ease-in-out 12; }
+body[data-action="walk"] .cat-paw-right { animation: cat-walk-paw .5s ease-in-out 12; }
+body[data-action="walk"] .cat-paw-left { animation: cat-walk-paw-left .5s ease-in-out 12; }
+body[data-action="walk"] .cat-tail { animation: cat-tail 1.2s ease-in-out 5; }
+body[data-action="walk"] .whale-tail { animation: swim-tail .6s ease-in-out 10; }
+body[data-action="walk"] .whale-fin { animation: swim-fin .6s ease-in-out 10; }
+body[data-action="walk"] .whale-spout { animation: spout-idle 2s ease-in-out 3; }
+body[data-action="dance"] #creature { animation: pet-dance 2.4s ease-in-out both; }
+body[data-action="dance"] .robot-arm-left { animation: dance-arm-left .8s ease-in-out 3; }
+body[data-action="dance"] .robot-arm-right { animation: dance-arm-right .8s ease-in-out 3; }
+body[data-action="dance"] .robot-leg-left, body[data-action="dance"] .cat-foot-left { animation: step-left .8s ease-in-out 3; }
+body[data-action="dance"] .robot-leg-right, body[data-action="dance"] .cat-foot-right { animation: step-right .8s ease-in-out 3; }
+body[data-action="dance"] .cat-paw-right { animation: cat-dance-paw .8s ease-in-out 3; }
+body[data-action="dance"] .cat-paw-left { animation: cat-dance-paw-left .8s ease-in-out 3; }
+body[data-action="dance"] .cat-tail { animation: cat-tail .8s ease-in-out 3; }
+body[data-action="dance"] .whale-fin { animation: swim-fin .6s ease-in-out 4; }
+body[data-action="dance"] .whale-tail { animation: swim-tail .6s ease-in-out 4; }
+body[data-action="dance"] .antenna-light { animation: antenna-thinking .8s ease-in-out 3; }
+body[data-action="peek"] #creature { animation: pet-peek 2.2s ease-in-out both; }
+body[data-action="peek"] .cat-paw-right { animation: cat-peek-paw 2.2s ease-in-out both; }
+body[data-action="peek"] .pet-head { animation: peek-head 2.2s ease-in-out both; }
+body[data-action="peek"] .eyes { animation: peek-eyes 2.2s ease-in-out both; }
+body[data-action="peek"] .robot-arm-right { animation: robot-peek-arm 2.2s ease-in-out both; }
+body[data-action="peek"] .whale-fin { animation: whale-peek-fin 2.2s ease-in-out both; }
+body[data-action="shake"] #creature { animation: pet-shake 1.6s ease-in-out both; }
+body[data-action="shake"] .pet-head { animation: shake-head .4s ease-in-out 4; }
+body[data-action="shake"] .cat-tail, body[data-action="shake"] .whale-tail { animation: swim-tail .4s ease-in-out 4; }
+body[data-action="shake"] .robot-arm-left { animation: walk-arm-left .4s ease-in-out 4; }
+body[data-action="shake"] .robot-arm-right { animation: walk-arm-right .4s ease-in-out 4; }
+body[data-action="shake"] .eyes { display: none; }
+body[data-action="shake"] .sleep-eyes { display: inline !important; }
+.dragging svg *, .dragging .pet-custom-image, .dragging .pet-custom-frozen { cursor: grabbing; }
+
+/* Decorations never enter the painted-body hit test, including every child. */
+#reaction, #reaction *, #pet-caption, #pet-caption * { pointer-events: none !important; }
+#reaction { position: absolute; inset: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+#reaction > span { display: none; position: absolute; inset: 0; }
+#reaction i { position: absolute; font-style: normal; line-height: 1; opacity: 0; }
+body[data-effect="heart"] .pet-hearts, body[data-effect="sparkle"] .pet-sparkles, body[data-effect="bubbles"] .pet-bubbles, body[data-effect="sleep"] .pet-sleep { display: block !important; }
+.pet-hearts i { color: #d58aaa; font-size: clamp(10px, 9vw, 25px); animation: heart-rise 1.2s ease-out both; }
+.pet-hearts i:nth-child(1) { left: 17%; top: 24%; }
+.pet-hearts i:nth-child(2) { right: 16%; top: 16%; font-size: clamp(8px, 6vw, 17px); animation-delay: .15s; }
+.pet-hearts i:nth-child(3) { right: 9%; top: 38%; font-size: clamp(7px, 5vw, 15px); animation-delay: .28s; }
+.pet-sparkles i { color: #8bb6e3; font-size: clamp(9px, 8vw, 22px); animation: sparkle-pop 1.1s ease-out both; }
+.pet-sparkles i:nth-child(1) { left: 12%; top: 38%; }
+.pet-sparkles i:nth-child(2) { right: 12%; top: 24%; animation-delay: .15s; }
+.pet-sparkles i:nth-child(3) { left: 24%; top: 12%; font-size: clamp(8px, 5vw, 15px); animation-delay: .3s; }
+.pet-bubbles i { width: 5%; aspect-ratio: 1; border: 1.3px solid #80bbdd; border-radius: 50%; background: #e9faff55; animation: bubble-rise 1.5s ease-out both; }
+.pet-bubbles i:nth-child(1) { left: 27%; top: 27%; }
+.pet-bubbles i:nth-child(2) { left: 35%; top: 17%; width: 3.5%; animation-delay: .2s; }
+.pet-bubbles i:nth-child(3) { right: 25%; top: 23%; width: 4%; animation-delay: .35s; }
+.pet-sleep i { color: #7892b2; font-size: clamp(8px, 5vw, 15px); font-weight: 600; animation: sleep-drift 5.5s ease-in-out infinite; }
+.pet-sleep i:nth-child(1) { right: 22%; top: 25%; }
+.pet-sleep i:nth-child(2) { right: 16%; top: 18%; font-size: clamp(9px, 6vw, 18px); animation-delay: .6s; }
+.pet-sleep i:nth-child(3) { right: 10%; top: 10%; font-size: clamp(10px, 7vw, 21px); animation-delay: 1.2s; }
+#pet-caption { position: absolute; bottom: 1%; left: 50%; transform: translateX(-50%); max-width: 92%; padding: 1px 6px; border: 1px solid #d5e5ef; border-radius: 20px; background: #f4faffef; color: #5b7c98; font: 500 clamp(6px,4.5vw,11px)/1.1 -apple-system, "PingFang SC", sans-serif; letter-spacing: .1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#pet-caption:empty { display: none; }
+.paused #creature, .paused #creature * { animation-play-state: paused !important; }
+.paused #reaction, .paused #pet-caption { display: none !important; }
+.paused #reaction * { animation: none !important; }
+
+@keyframes pet-float { 0%,100% { transform: scale(var(--pet-scale)); } 50% { transform: translateY(-2%) rotate(1.3deg) scale(var(--pet-scale)); } }
+@keyframes cat-rest { 0%,45%,100% { transform: scale(var(--pet-scale)); } 70% { transform: translateY(.7%) scale(var(--pet-scale)) scaleY(.985); } }
+@keyframes pet-blink { 0%,43%,48%,100% { transform: scaleY(1); } 45%,46% { transform: scaleY(.12); } }
+@keyframes cat-tail { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-12deg); } }
+@keyframes whale-tail { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-7deg); } }
+@keyframes fin-idle { 0%,100% { transform: rotate(0); } 50% { transform: rotate(7deg); } }
+@keyframes spout-idle { 0%,100% { opacity: .8; transform: scaleY(1); } 50% { opacity: 1; transform: scaleY(.94); } }
+@keyframes antenna-idle { 0%,70%,100% { fill: #85d3f5; } 80% { fill: #c9f5ff; } }
+@keyframes antenna-thinking { 0%,100% { fill: #85d3f5; } 50% { fill: #efe7a9; } }
+@keyframes pet-drowsy { 0%,100% { transform: scale(var(--pet-scale)); } 50% { transform: translateY(1%) rotate(-2deg) scale(var(--pet-scale)); } }
+@keyframes pet-breathe { 0%,100% { transform: scale(var(--pet-scale)) scaleY(.99); } 50% { transform: translateY(.5%) scale(var(--pet-scale)) scale(1.012,.975); } }
+@keyframes pet-look { 0%,100% { transform: scale(var(--pet-scale)); } 30% { transform: rotate(-2deg) scale(var(--pet-scale)); } 70% { transform: rotate(2deg) scale(var(--pet-scale)); } }
+@keyframes robot-think { 0%,100% { transform: rotate(0); } 35%,65% { transform: rotate(-4deg); } }
+@keyframes cat-listen { 0%,100% { transform: rotate(0); } 40%,60% { transform: rotate(4deg); } }
+@keyframes pet-stretch { 0%,100% { transform: scale(var(--pet-scale)); } 45%,65% { transform: translateY(-1.2%) scale(var(--pet-scale)) scale(.97,1.035); } }
+@keyframes robot-stretch-left { 0%,100% { transform: rotate(0); } 45%,65% { transform: rotate(68deg); } }
+@keyframes robot-stretch-right { 0%,100% { transform: rotate(0); } 45%,65% { transform: rotate(-36deg); } }
+@keyframes cat-body-stretch { 0%,100% { transform: scaleY(1); } 45%,65% { transform: scaleY(1.07); } }
+@keyframes cat-paw-stretch { 0%,100% { transform: translate(0); } 45%,65% { transform: translate(7px, 5px) rotate(-9deg); } }
+@keyframes pet-greet { 0%,100% { transform: scale(var(--pet-scale)); } 30%,70% { transform: rotate(-2deg) translateY(-.5%) scale(var(--pet-scale)); } }
+@keyframes robot-wave { 0%,100% { transform: rotate(0); } 20%,60% { transform: rotate(-40deg); } 40%,80% { transform: rotate(-12deg); } }
+@keyframes cat-wash { 0%,100% { transform: translate(0); } 22%,57% { transform: translate(-1px,-38px) rotate(-12deg); } 39%,76% { transform: translate(-7px,-47px) rotate(-19deg); } }
+@keyframes whale-wave { 0%,100% { transform: rotate(0); } 25%,65% { transform: rotate(-18deg); } 45%,80% { transform: rotate(13deg); } }
+@keyframes spout-greet { 0%,100% { transform: scaleY(1); opacity: 1; } 35%,65% { transform: scaleY(.82); opacity: .65; } }
+@keyframes pet-wiggle { 0%,100% { transform: scale(var(--pet-scale)); } 25%,65% { transform: rotate(-4deg) scale(var(--pet-scale)); } 45%,80% { transform: rotate(4deg) scale(var(--pet-scale)); } }
+@keyframes pet-hop { 0%,100% { transform: scale(var(--pet-scale)); } 18% { transform: translateY(1%) scale(var(--pet-scale)) scale(1.025,.965); } 47% { transform: translateY(-4%) rotate(2deg) scale(var(--pet-scale)); } 75% { transform: translateY(.6%) scale(var(--pet-scale)) scale(1.025,.97); } }
+@keyframes pet-spin { 0% { transform: rotate(0) scale(var(--pet-scale)); } 15% { transform: rotate(20deg) scale(var(--pet-scale)) scale(.82); } 45% { transform: rotate(150deg) scale(var(--pet-scale)) scale(.74); } 75% { transform: rotate(285deg) scale(var(--pet-scale)) scale(.78); } 100% { transform: rotate(360deg) scale(var(--pet-scale)); } }
+@keyframes pet-love { 0%,100% { transform: scale(var(--pet-scale)); } 35% { transform: translateY(-1.5%) rotate(-2deg) scale(var(--pet-scale)) scale(1.025); } 70% { transform: translateY(-1%) rotate(2deg) scale(var(--pet-scale)); } }
+@keyframes pet-surprise { 0%,100% { transform: scale(var(--pet-scale)); } 30% { transform: translateY(-2.5%) scale(var(--pet-scale)) scale(.98,1.035); } 65% { transform: scale(var(--pet-scale)) scale(1.02,.98); } }
+@keyframes pet-yawn { 0%,100% { transform: scale(var(--pet-scale)); } 40%,65% { transform: translateY(-1%) rotate(-3deg) scale(var(--pet-scale)) scaleY(1.02); } }
+@keyframes pet-wake { 0% { transform: scale(var(--pet-scale)) scaleY(.975); } 45% { transform: translateY(-1.5%) scale(var(--pet-scale)) scale(.97,1.03); } 100% { transform: scale(var(--pet-scale)); } }
+@keyframes wake-eyes { 0%,20% { transform: scaleY(.1); } 60%,100% { transform: scaleY(1); } }
+@keyframes pet-dangle { 0%,100% { transform: translateY(-1%) rotate(-3deg) scale(var(--pet-scale)) scale(.98,1.015); } 50% { transform: translateY(-1%) rotate(3deg) scale(var(--pet-scale)) scale(.98,1.015); } }
+@keyframes loose-leg { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+@keyframes pet-land { 0% { transform: translateY(-1%) scale(var(--pet-scale)); } 35% { transform: translateY(1%) scale(var(--pet-scale)) scale(1.035,.95); } 70% { transform: translateY(-.5%) scale(var(--pet-scale)) scale(.99,1.015); } 100% { transform: scale(var(--pet-scale)); } }
+@keyframes pet-walk {
+  0%,100% { transform: translate(0,0) scale(var(--pet-scale)) scaleX(1); }
+  5% { transform: translate(-.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  10% { transform: translate(-1.5%,0) scale(var(--pet-scale)) scaleX(1); }
+  15% { transform: translate(-2.4%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  20% { transform: translate(-3.3%,0) scale(var(--pet-scale)) scaleX(1); }
+  25% { transform: translate(-4.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  29% { transform: translate(-6%,0) scale(var(--pet-scale)) scaleX(1); }
+  31% { transform: translate(-6%,0) scale(var(--pet-scale)) scaleX(.12); }
+  33% { transform: translate(-6%,0) scale(var(--pet-scale)) scaleX(-1); }
+  38% { transform: translate(-4.2%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  43% { transform: translate(-2.4%,0) scale(var(--pet-scale)) scaleX(-1); }
+  48% { transform: translate(-.6%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  53% { transform: translate(1.2%,0) scale(var(--pet-scale)) scaleX(-1); }
+  58% { transform: translate(3%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  63% { transform: translate(4.8%,0) scale(var(--pet-scale)) scaleX(-1); }
+  67% { transform: translate(6%,-.3%) scale(var(--pet-scale)) scaleX(-1); }
+  69% { transform: translate(6%,0) scale(var(--pet-scale)) scaleX(-.12); }
+  71% { transform: translate(6%,0) scale(var(--pet-scale)) scaleX(1); }
+  77% { transform: translate(4.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  83% { transform: translate(3.4%,0) scale(var(--pet-scale)) scaleX(1); }
+  89% { transform: translate(1.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  95% { transform: translate(0,0) scale(var(--pet-scale)) scaleX(1); }
+}
+@keyframes step-left { 0%,50%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(-2px,-4px) rotate(-12deg); } 75% { transform: translate(2px,1px) rotate(8deg); } }
+@keyframes step-right { 0%,50%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(2px,1px) rotate(8deg); } 75% { transform: translate(-2px,-4px) rotate(-12deg); } }
+@keyframes walk-arm-left { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(18deg); } 75% { transform: rotate(-16deg); } }
+@keyframes walk-arm-right { 0%,50%,100% { transform: rotate(0); } 25% { transform: rotate(30deg); } 75% { transform: rotate(-12deg); } }
+@keyframes cat-walk-paw { 0%,50%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(-2px,-3px) rotate(-6deg); } 75% { transform: translate(2px,1px) rotate(5deg); } }
+@keyframes swim-tail { 0%,100% { transform: rotate(0); } 30% { transform: rotate(-10deg); } 70% { transform: rotate(7deg); } }
+@keyframes swim-fin { 0%,100% { transform: rotate(0); } 30% { transform: rotate(18deg); } 70% { transform: rotate(-14deg); } }
+@keyframes pet-dance { 0%,100% { transform: translate(0) rotate(0) scale(var(--pet-scale)); } 16% { transform: translate(-2%,-1%) rotate(-5deg) scale(var(--pet-scale)); } 33% { transform: translate(0,-2%) rotate(0) scale(var(--pet-scale)); } 50% { transform: translate(2%,-1%) rotate(5deg) scale(var(--pet-scale)); } 67% { transform: translate(0) rotate(0) scale(var(--pet-scale)); } 83% { transform: translate(-1%,-1%) rotate(-3deg) scale(var(--pet-scale)); } }
+@keyframes dance-arm-left { 0%,100% { transform: rotate(0); } 25% { transform: rotate(45deg); } 70% { transform: rotate(-18deg); } }
+@keyframes dance-arm-right { 0%,100% { transform: rotate(0); } 25% { transform: rotate(35deg); } 70% { transform: rotate(-35deg); } }
+@keyframes cat-dance-paw { 0%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(-8px,-9px) rotate(-12deg); } 70% { transform: translate(3px,-4px) rotate(9deg); } }
+@keyframes pet-peek { 0%,100% { transform: translate(0) rotate(0) scale(var(--pet-scale)); } 20% { transform: translate(-1%,2%) rotate(0) scale(var(--pet-scale)) scale(.96); } 45%,67% { transform: translate(3%,-.5%) rotate(4deg) scale(var(--pet-scale)) scale(.96); } 83% { transform: translate(1%,1%) rotate(-1deg) scale(var(--pet-scale)); } }
+@keyframes peek-head { 0%,100% { transform: rotate(0); } 40%,67% { transform: rotate(-7deg); } }
+@keyframes peek-eyes { 0%,100% { transform: translateX(0) scaleY(1); } 20% { transform: translateX(0) scaleY(.6); } 42%,67% { transform: translateX(3px) scaleY(1); } }
+@keyframes cat-peek-paw { 0%,100% { transform: translate(0) rotate(0); } 20% { transform: translate(0,-18px) rotate(0); } 42%,67% { transform: translate(1px,-59px) rotate(7deg); } 82% { transform: translate(1px,-32px) rotate(2deg); } }
+@keyframes robot-peek-arm { 0%,100% { transform: rotate(0); } 40%,67% { transform: rotate(-55deg); } }
+@keyframes whale-peek-fin { 0%,100% { transform: rotate(0); } 40%,67% { transform: rotate(-28deg); } }
+@keyframes pet-shake { 0%,100% { transform: translateX(0) rotate(0) scale(var(--pet-scale)); } 12%,37%,62% { transform: translateX(-.7%) rotate(-2.5deg) scale(var(--pet-scale)); } 25%,50%,75% { transform: translateX(.7%) rotate(2.5deg) scale(var(--pet-scale)); } 88% { transform: translateX(-.3%) rotate(-1deg) scale(var(--pet-scale)); } }
+@keyframes shake-head { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+@keyframes heart-rise { 0% { opacity: 0; transform: translateY(10%) scale(.7); } 25%,55% { opacity: .9; } 100% { opacity: 0; transform: translateY(-70%) scale(1.1); } }
+@keyframes sparkle-pop { 0% { opacity: 0; transform: scale(.4) rotate(-12deg); } 35%,65% { opacity: .9; } 100% { opacity: 0; transform: scale(1.1) rotate(12deg); } }
+@keyframes bubble-rise { 0% { opacity: 0; transform: translateY(50%) scale(.65); } 25%,60% { opacity: .8; } 100% { opacity: 0; transform: translateY(-170%) scale(1.08); } }
+@keyframes sleep-drift { 0%,100% { opacity: .15; transform: translateY(15%); } 40%,65% { opacity: .8; transform: translateY(-15%); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  #reaction i { opacity: .8; }
+  body[data-action="wave"] .robot-arm-right { transform: rotate(-28deg); }
+  body[data-action="wave"] .cat-paw-right { transform: translate(-4px,-41px) rotate(-15deg); }
+  body[data-action="wave"] .whale-fin { transform: rotate(-14deg); }
+  body[data-action="spin"] #creature { transform: rotate(-4deg) scale(var(--pet-scale)); }
+  body[data-action="walk"] .robot-leg-left, body[data-action="walk"] .cat-foot-left { transform: translateY(-3px) rotate(-7deg); }
+  body[data-action="dance"] #creature { transform: rotate(-3deg) scale(var(--pet-scale)); }
+  body[data-action="peek"] #creature { transform: translateX(2%) rotate(3deg) scale(var(--pet-scale)) scale(.97); }
+  body[data-action="peek"] .cat-paw-right { transform: translate(1px,-59px) rotate(7deg); }
+  body[data-action="shake"] .pet-head { transform: rotate(-3deg); }
+}
+
+/* Whalegirl atlas poses stay inside the same hit-test root transform. */
+body[data-action="crawl"] #creature { animation: pet-crawl 6s linear both; }
+body[data-action="eat"] #creature { animation: pet-eat 4s ease-in-out both; }
+body[data-action="work"] #creature { animation: pet-work 5s ease-in-out both; }
+@keyframes pet-crawl {
+  0%,100% { transform: translate(0,0) scale(var(--pet-scale)) scaleX(1); }
+  10% { transform: translate(-1.5%,.6%) scale(var(--pet-scale)) scaleX(1); }
+  20% { transform: translate(-3.3%,1.2%) scale(var(--pet-scale)) scaleX(1); }
+  29% { transform: translate(-6%,.6%) scale(var(--pet-scale)) scaleX(1); }
+  31% { transform: translate(-6%,.6%) scale(var(--pet-scale)) scaleX(.12); }
+  33% { transform: translate(-6%,.6%) scale(var(--pet-scale)) scaleX(-1); }
+  43% { transform: translate(-2.4%,1.2%) scale(var(--pet-scale)) scaleX(-1); }
+  53% { transform: translate(1.2%,.6%) scale(var(--pet-scale)) scaleX(-1); }
+  63% { transform: translate(4.8%,1.2%) scale(var(--pet-scale)) scaleX(-1); }
+  67% { transform: translate(6%,.6%) scale(var(--pet-scale)) scaleX(-1); }
+  69% { transform: translate(6%,.6%) scale(var(--pet-scale)) scaleX(-.12); }
+  71% { transform: translate(6%,.6%) scale(var(--pet-scale)) scaleX(1); }
+  83% { transform: translate(3.4%,1.2%) scale(var(--pet-scale)) scaleX(1); }
+  95% { transform: translate(0,.6%) scale(var(--pet-scale)) scaleX(1); }
+}
+@keyframes pet-eat {
+  0%,20%,40%,60%,80%,100% { transform: scale(var(--pet-scale)); }
+  10%,30%,50%,70%,90% { transform: translateY(.6%) scale(var(--pet-scale)) scale(1.01,.985); }
+}
+@keyframes pet-work {
+  0%,50%,100% { transform: scale(var(--pet-scale)); }
+  20%,70% { transform: translateY(.5%) rotate(-.6deg) scale(var(--pet-scale)); }
+  35%,85% { transform: translateY(-.4%) rotate(.6deg) scale(var(--pet-scale)); }
+}
+
+body[data-pet="whalegirl"] { --pet-scale: 1.1; }
+body[data-pet="whalegirl"] #creature { transform-origin: 50% 50%; }
+/* Keep the VI character's head and outstretched hands inside the small window. */
+body[data-pet="cyberdad"] { --pet-scale: .86; }
+body[data-pet="cyberdad"] #creature { transform-origin: 50% 50%; }
+.pet-sprite { display:block; width:100%; height:100%; pointer-events:auto; cursor:grab; }
+.dragging .pet-sprite { cursor:grabbing; }
+
+/* Mirrored forelegs keep both paws readable while moving independently. */
+@keyframes cat-paw-stretch-left { 0%,100% { transform: translate(0); } 45%,65% { transform: translate(-7px, 5px) rotate(9deg); } }
+@keyframes cat-walk-paw-left { 0%,50%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(-2px,1px) rotate(-5deg); } 75% { transform: translate(2px,-3px) rotate(6deg); } }
+@keyframes cat-dance-paw-left { 0%,100% { transform: translate(0) rotate(0); } 25% { transform: translate(-3px,-4px) rotate(-9deg); } 70% { transform: translate(8px,-9px) rotate(12deg); } }
+
+/* This atlas stride faces right; motion and mirroring share the hit-test matrix. */
+body[data-pet="cyberdad"][data-action="walk"] #creature { animation-name: cyberdad-walk; }
+@keyframes cyberdad-walk {
+  0%,100% { transform: translate(0,0) scale(var(--pet-scale)) scaleX(1); }
+  5% { transform: translate(.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  10% { transform: translate(1.5%,0) scale(var(--pet-scale)) scaleX(1); }
+  15% { transform: translate(2.4%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  20% { transform: translate(3.3%,0) scale(var(--pet-scale)) scaleX(1); }
+  25% { transform: translate(4.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  29% { transform: translate(6%,0) scale(var(--pet-scale)) scaleX(1); }
+  31% { transform: translate(6%,0) scale(var(--pet-scale)) scaleX(.12); }
+  33% { transform: translate(6%,0) scale(var(--pet-scale)) scaleX(-1); }
+  38% { transform: translate(4.2%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  43% { transform: translate(2.4%,0) scale(var(--pet-scale)) scaleX(-1); }
+  48% { transform: translate(.6%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  53% { transform: translate(-1.2%,0) scale(var(--pet-scale)) scaleX(-1); }
+  58% { transform: translate(-3%,-.6%) scale(var(--pet-scale)) scaleX(-1); }
+  63% { transform: translate(-4.8%,0) scale(var(--pet-scale)) scaleX(-1); }
+  67% { transform: translate(-6%,-.3%) scale(var(--pet-scale)) scaleX(-1); }
+  69% { transform: translate(-6%,0) scale(var(--pet-scale)) scaleX(-.12); }
+  71% { transform: translate(-6%,0) scale(var(--pet-scale)) scaleX(1); }
+  77% { transform: translate(-4.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  83% { transform: translate(-3.4%,0) scale(var(--pet-scale)) scaleX(1); }
+  89% { transform: translate(-1.7%,-.6%) scale(var(--pet-scale)) scaleX(1); }
+  95% { transform: translate(0,0) scale(var(--pet-scale)) scaleX(1); }
+}

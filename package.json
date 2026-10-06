@@ -1,0 +1,101 @@
+{
+  "name": "@cyberdaddy/harness-dressup",
+  "version": "0.8.2",
+  "description": "赛博老爸的 Harness 换装器 — 本地主题、启动动画与独立桌宠",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "install:native": "node scripts/install.mjs",
+    "uninstall:native": "node scripts/install.mjs --remove",
+    "doctor": "node scripts/doctor.mjs",
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/launch.mjs",
+    "pet": "node scripts/launch.mjs --pet",
+    "test": "node --test tests/*.test.mjs",
+    "test:native": "node tests/native.mjs",
+    "test:startup": "node tests/startup.mjs",
+    "test:pet": "node tests/pet.mjs",
+    "test:custom-manager": "node tests/custom-manager.mjs",
+    "test:custom-pet-store": "node tests/custom-pet-store.mjs",
+    "test:native-custom": "node tests/native-custom.mjs",
+    "test:native-custom-startup": "node tests/native-custom-startup.mjs",
+    "test:pet-behavior": "node tests/pet-behavior-ui.mjs",
+    "test:whalegirl-pet": "node tests/whalegirl-pet.mjs",
+    "test:whalegirl-native": "node tests/whalegirl-native.mjs",
+    "test:pet-sound-browser": "node tests/pet-sound-browser.mjs",
+    "test:video-startup": "node tests/video-startup.mjs",
+    "test:cyberdad-pet": "node tests/cyberdad-pet.mjs",
+    "test:cyberdad-video": "node tests/cyberdad-video.mjs",
+    "test:cyberdad-native": "node tests/cyberdad-native.mjs",
+    "test:geek-video": "node tests/geek-video.mjs",
+    "test:geek-native": "node tests/geek-native.mjs",
+    "test:geek-hud": "node tests/geek-hud-native.mjs"
+  },
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*": "./locale/*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-theme",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-connection"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "44.0.0",
+    "esbuild": "0.25.12",
+    "playwright": "1.61.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-ui-theme": "0.2.0-rc.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-client-ui-theme": {
+      "optional": true
+    }
+  },
+  "files": [
+    "assets/",
+    "desktop/",
+    "docs/",
+    "lib/",
+    "locale/",
+    "plugin/",
+    "scripts/",
+    "src/",
+    "cordis.patch.yml",
+    "run.sh",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "examples/"
+  ],
+  "dependencies": {
+    "proper-lockfile": "4.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cyberdaddyleo/deepseek-meihuaqi.git"
+  },
+  "homepage": "https://github.com/cyberdaddyleo/deepseek-meihuaqi#readme",
+  "bugs": {
+    "url": "https://github.com/cyberdaddyleo/deepseek-meihuaqi/issues"
+  }
+}

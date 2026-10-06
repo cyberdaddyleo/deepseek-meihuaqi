@@ -1,0 +1,83 @@
+.scene-whale {
+  background: linear-gradient(145deg, #fff 10%, #e8f5ff 65%, #d9ebfc);
+}
+.scene-stars {
+  background: radial-gradient(
+    ellipse at 55% 45%,
+    #f4f1ff,
+    #e6ebff 65%,
+    #dde6fc
+  );
+}
+.scene-forest {
+  background: linear-gradient(150deg, #fffcf0, #eef5e5 60%, #e1efd9);
+}
+.scene-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scene-orbs i {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: #ffffff6b;
+  filter: blur(2px);
+  animation: scene-drift 9s ease-in-out infinite;
+}
+.scene-orbs i:nth-child(1) {
+  left: 13%;
+  top: 18%;
+  width: 50px;
+  height: 50px;
+  border: 1px solid #ffffffa3;
+}
+.scene-orbs i:nth-child(2) {
+  right: 12%;
+  bottom: 5%;
+  animation-delay: -4s;
+}
+.scene-orbs i:nth-child(3) {
+  right: 20%;
+  top: 19%;
+  width: 12px;
+  height: 12px;
+  animation-delay: -7s;
+}
+.scene-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  animation: scene-drift 5s ease-in-out infinite;
+}
+.scene-stars .scene-art {
+  animation: stars-gather 5s ease-in-out infinite;
+}
+.scene-forest .scene-art {
+  animation: leaf-sway 6s ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+@keyframes scene-drift {
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+@keyframes stars-gather {
+  50% {
+    transform: scale(0.91) rotate(5deg);
+    opacity: 0.6;
+  }
+}
+@keyframes leaf-sway {
+  50% {
+    transform: rotate(5deg) translateY(-5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-art,
+  .scene-orbs i {
+    animation: none !important;
+  }
+}

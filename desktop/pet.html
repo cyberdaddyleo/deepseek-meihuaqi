@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>赛博老爸桌宠</title>
+    <link rel="stylesheet" href="./pet.css" />
+  </head>
+  <body>
+    <div id="creature" aria-label="拖动桌宠，单击互动，右键打开菜单"></div>
+    <div id="reaction" aria-hidden="true">
+      <span class="pet-hearts"><i>♡</i><i>♥</i><i>♡</i></span>
+      <span class="pet-sparkles"><i>✦</i><i>✧</i><i>✦</i></span>
+      <span class="pet-bubbles"><i></i><i></i><i></i></span>
+      <span class="pet-sleep"><i>z</i><i>z</i><i>Z</i></span>
+    </div>
+    <div id="pet-caption" role="status" aria-live="polite"></div>
+    <script type="module" src="./pet.mjs"></script>
+  </body>
+</html>

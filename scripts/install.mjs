@@ -1,0 +1,10 @@
+import {spawnSync} from 'node:child_process';
+import {join} from 'node:path';
+import {root} from './paths.mjs';
+import {doctor} from './doctor.mjs';
+const app=doctor(), executable=app+'/Contents/MacOS/DeepSeek Harness';
+const listing=spawnSync('ps',['-axo','command='],{encoding:'utf8'});if(listing.status!==0)throw new Error('无法检查原生进程，已停止安装。');
+const processes=listing.stdout.split('\n');
+if(processes.some(x=>x===executable||x.startsWith(executable+' ')))throw new Error('请先使用 Cmd+Q 完全退出原生 Harness，再运行安装/卸载命令；不会强制中断你的任务。');
+const r=spawnSync(executable,['--expose-internals',join(root,'scripts/install-worker.mjs'),...process.argv.slice(2)],{stdio:'inherit',env:{...process.env,ELECTRON_RUN_AS_NODE:'1'}});
+process.exitCode=r.status??1;

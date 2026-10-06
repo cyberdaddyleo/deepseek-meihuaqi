@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <defs>
+    <linearGradient id="star-body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3b8"/>
+      <stop offset="1" stop-color="#ffd780"/>
+    </linearGradient>
+  </defs>
+  <path d="M120 28 C126 28 134 65 145 76 C155 84 198 79 201 88 C204 97 173 117 169 131 C165 145 181 185 174 191 C168 197 134 170 120 170 C106 170 72 197 66 191 C59 185 75 145 71 131 C67 117 36 97 39 88 C42 79 85 84 95 76 C106 65 114 28 120 28 Z" fill="url(#star-body)" stroke="#ddb66d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M101 82 L112 59" fill="none" stroke="#fffaf0" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+  <ellipse cx="98" cy="118" rx="5" ry="7" fill="#594a70"/>
+  <ellipse cx="142" cy="118" rx="5" ry="7" fill="#594a70"/>
+  <path d="M109 136 Q120 146 131 136" fill="none" stroke="#594a70" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="84" cy="135" rx="10" ry="5" fill="#efaaa0" opacity="0.65"/>
+  <ellipse cx="156" cy="135" rx="10" ry="5" fill="#efaaa0" opacity="0.65"/>
+  <circle cx="202" cy="41" r="5" fill="#bba7e2"/>
+  <path d="M37 166 V178 M31 172 H43" stroke="#bba7e2" stroke-width="3" stroke-linecap="round"/>
+</svg>
